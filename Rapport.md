@@ -52,8 +52,9 @@ Puis on relance le service ssh avec:
 
 Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**,
 par exemple pour le connecter sur le bridge
+
 le fichier : **/etc/lxc/default.conf** : definit la conf par default des containers
-le repertoire : **/var/lib/lxc/** contient des repertoires avec la conf des containers deja existant*
+le repertoire : **/var/lib/lxc/** contient des repertoires avec la conf des containers deja existant
 
 #### Dans **/var/lib/lxc/monContainer/config**, ajouter les lignes:
 
