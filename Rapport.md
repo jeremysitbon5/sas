@@ -1,7 +1,8 @@
 # Rapport de TP
 
 Pour mener a bien les séances de Tp, nous avons installé une machine virtuelle Debian 64 à partir de l'image mini.iso.
-On a choisi un disque de **8Gb** et **1Gb** de RAM.
+On a choisi un disque de **8Gb** et **1Gb** de RAM.  
+Mode d'accés réseau par pont.
 
 ## Partitionnement:
 La commande  **fdisk**   va nous permettre de partitionner le disque.     
@@ -37,7 +38,7 @@ PermitRootLogin yes*
 
 Puis on relance le service ssh avec:
     
-     service ssh restart
+    /etc/init.d/ssh restart 
 
 ### Connection à la machine via SSh:
 
@@ -51,9 +52,9 @@ Puis on relance le service ssh avec:
     lxc-create -n c1 -t debian -- -r buster
 
 Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**,
-par exemple pour le connecter sur le bridge.  
-le fichier : **/etc/lxc/default.conf** : definit la conf par default des containers  
-le repertoire : **/var/lib/lxc/** contient des repertoires avec la conf des containers deja existant
+par exemple pour le connecter sur le bridge
+le fichier : **/etc/lxc/default.conf** : definit la conf par default des containers
+le repertoire : **/var/lib/lxc/** contient des repertoires avec la conf des containers deja existant*
 
 #### Dans **/var/lib/lxc/monContainer/config**, ajouter les lignes:
 
@@ -162,7 +163,7 @@ lxc.network.ipv4.gateway = 192.168.100.1
 
     /etc/init.d/networking restart
 
-Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4:
+Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'interface du bridge avec son adresse ip.
 
     1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -186,3 +187,16 @@ Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4:
        valid_lft forever preferred_lft forever
     inet6 fe80::ecf1:3cff:fe48:c48d/64 scope link 
        valid_lft forever preferred_lft forever
+
+### On rentre dans c1 avec la commande:
+
+    lxc-attach c1
+
+
+
+    ifconfig eth0 192.168.100.2/24
+root@c3:~# route add default gw 192.168.100.1
+root@c3:~# echo 'nameserver 192.168.0.1' > /etc/resolv.conf
+192.168.0.1 est l'addresse ip de la box
+ping 8.8.8.8
+ping google.com
