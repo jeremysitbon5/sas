@@ -48,35 +48,70 @@ Puis on relance le service ssh avec:
 ## Installation du conteneur:
  ### installation du package lxc
     apt install lxc
-### Création du premier conteneur C1
-    lxc-create -n c1 -t debian -- -r buster
+ ### Statut du service lxc
+    systemctl status lxc-net.service
 
-Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**,
-par exemple pour le connecter sur le bridge
-le fichier : **/etc/lxc/default.conf** : definit la conf par default des containers
-le repertoire : **/var/lib/lxc/** contient des repertoires avec la conf des containers deja existant*
+### Activer le service lxc
+    systemctl start lxc-net.service
+ ### Configuration du réseau des conatainer
+le fichier : **/etc/lxc/default.conf** : definit la configuration par default des containers
+le repertoire : **/var/lib/lxc/** contient des repertoires avec la configuration des containers deja existant
 
-#### Dans **/var/lib/lxc/monContainer/config**, ajouter les lignes:
+#### La configuration réseau de Debian par defaut est désactivée.  
+On va donc modifier le fichier: **/etc/lxc/default.conf** et ajouter les lignes suivantes:
 
-    #Network configuration
-    lxc.net.0.type = veth   
-    lxc.net.0.link = lxc-bridge-nat
-    lxc.net.0.flags = up
-    lxc.net.0.hwaddr = 00:16:3e:14:f7:db
-
-#### Dans **/etc/lxc/default.conf**
     lxc.net.0.type = veth
-    lxc.net.0.link = lxc-bridge-nat
+    lxc.net.0.link = lxcbr0
     lxc.net.0.flags = up
     lxc.net.0.hwaddr = 00:16:3e:xx:xx:xx
     lxc.apparmor.profile = generated
     lxc.apparmor.allow_nesting = 1
-### decommenter la ligne dans le fichier */etc/default/lxc*:
+    
+### Décommenter (ou mettre à "true") la ligne suivante dans le fichier */etc/default/lxc*:
     USE_LXC_BRIDGE="true"
+### Redemarrer lxc-net:
+    systemctl restart lxc-net.service
+ 
+## Voici la réponse de la commande *ip a* avant et aprés la configuration:
+    
+    ip a
+        1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+    2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:24:f5:b7 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.24/24 brd 192.168.1.255 scope global dynamic noprefixroute enp0s3
+       valid_lft 84125sec preferred_lft 84125sec
+    inet6 fe80::a00:27ff:fe24:f5b7/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever
+    root@sas:~# systemctl restart lxc-net.service
+    root@sas:~# ip a
+    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+    2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:24:f5:b7 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.24/24 brd 192.168.1.255 scope global dynamic noprefixroute enp0s3
+       valid_lft 84109sec preferred_lft 84109sec
+    inet6 fe80::a00:27ff:fe24:f5b7/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever
+    3: lxcbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether 00:16:3e:00:00:00 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.3.1/24 scope global lxcbr0
+       valid_lft forever preferred_lft forever
+    
+## Création du premier conteneur C1
+    lxc-create -n c1 -t debian -- -r buster
 
 ### Demarer le container:
     lxc-start -n c1
-
+    
 ### Verifier l'état du container avec la commande:
     lxc-info c1
 
@@ -100,14 +135,54 @@ Exemple d'utilisation:
     RX bytes:      486 bytes
     Total bytes:   1.07 KiB
 
+#### Dans **/var/lib/lxc/monContainer/config**, on peut constater:
 
-### Statut du service lxc
-    systemctl status lxc-net.service
+    root@sas:~# cat /var/lib/lxc/c1/config 
+    
 
-### Activer le service lxc
-    systemctl start            lxc-net.service
+    # Uncomment the following line to support nesting containers:
+    #lxc.include = /usr/share/lxc/config/nesting.conf
+    # (Be aware this has security implications)
 
-### cloner le container
+      lxc.net.0.type = veth
+    lxc.net.0.link = lxcbr0
+    lxc.net.0.flags = up
+    lxc.net.0.hwaddr = 00:16:3e:a0:e6:76
+    lxc.apparmor.profile = generated
+    lxc.apparmor.allow_nesting = 1
+    lxc.rootfs.path = dir:/var/lib/lxc/c1/rootfs
+
+    # Common configuration
+    lxc.include = /usr/share/lxc/config/debian.common.conf
+
+    # Container specific configuration
+    lxc.tty.max = 4
+    lxc.uts.name = c1
+    lxc.arch = amd64
+    lxc.pty.max = 1024
+   
+ ### Activer la commande ping dans c1 pour tester la connection.
+ #### Lancer c1 avec la commande suivante:
+ 
+    lxc-attach c1
+ #### Installer la commande ping avec la commande suivante:
+    apt install iputils-ping
+ 
+ #### On met à jour la commande apt-get (si erreur) à la ligne précédente:
+    apt-get update
+ 
+ ### Enfin, la commande ping nous répond:
+        ping 8.8.8.8 **(adresse de google)**
+        64 bytes from 8.8.8.8: icmp_seq=1 ttl=51 time=16.1 ms
+        
+  Ainsi que la commande:
+
+    root@c1:~# ping google.com
+    PING google.com (216.58.213.174) 56(84) bytes of data.
+    64 bytes from par21s04-in-f174.1e100.net (216.58.213.174): icmp_seq=1 ttl=51 time=11.5 ms
+
+
+## clonage deu container c1:
 
 #### Il faut stoper le container c1:
 
@@ -122,9 +197,7 @@ Exemple d'utilisation:
 **On verifie bien la pésence de C1,C2 et C3.**
 
 
-
-
-### Creation du bridge:
+## Creation du bridge:
 Fonctionnalités:
 
 Persistant dans sysctl.conf: **/etc/sysctl.conf** 
@@ -143,22 +216,26 @@ Insérez les lignes suivantes dans **/etc/network/interfaces** :
     address 192.168.100.1
     netmask 255.255.255.0
     up iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
+Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**:
 
-La configuration de **/etc/network/interfaces** de chaque container est équivalente à la proposition dans "L’hôte comme bridge"; si vous n’ajoutez pas un serveur dhcp dans le **lxc-bridge-nat**, le container devrait maintenant utiliser une configuration avec ip statique. 
-Le fichier de configuration utilise maintenant **lxc-bridge-nat** comme lien et une autre ip.
+    # Network configuration
+    lxc.net.0.type = veth
+    lxc.net.0.link = lxc-bridge-nat
+    lxc.net.0.ipv4.address = 192.168.100.10/24
+    lxc.net.0.ipv4.gateway = 192.168.100.1
+    lxc.net.0.flags = up
+    lxc.net.0.hwaddr = 00:16:3e:d5:76:c8  
 
-    lxc.network.link = lxc-bridge-nat
-    lxc.network.ipv4 = 192.168.100.10/24
 
-L’hôte peut se connecter facilement depuis le réseau original **192.168.1.0** à celui qui est « natté » en **192.168.100.0**
-si vous voulez accéder au port du container (exemple : mettre un serveur apache dans le container) depuis l’extérieur, vous devrait faire suivre le port depuis le l’hôte vers l’IP du container.
+
+  
+
+
 
     echo 1 > /proc/sys/net/ipv4/ip_forward
 
 
-lxc.network.link = lxc-bridge-nat
-lxc.network.ipv4 = 192.168.100.10/24
-lxc.network.ipv4.gateway = 192.168.100.1
+
 
 
     /etc/init.d/networking restart
@@ -188,15 +265,30 @@ Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'in
     inet6 fe80::ecf1:3cff:fe48:c48d/64 scope link 
        valid_lft forever preferred_lft forever
 
-### On rentre dans c1 avec la commande:
-
+### Redemarrer c1 avec:
+    lxc-start c1
+### Rentrer dans c1 avec la commande:
     lxc-attach c1
 
+### La commande *ip a* nous renvoi:
+
+    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+    13: eth0@if14: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 00:16:3e:d5:76:c8 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 192.168.100.10/24 brd 192.168.100.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::216:3eff:fed5:76c8/64 scope link 
+       valid_lft forever preferred_lft forever
 
 
     ifconfig eth0 192.168.100.2/24
 root@c3:~# route add default gw 192.168.100.1
-root@c3:~# echo 'nameserver 192.168.0.1' > /etc/resolv.conf
+root@c3:~# echo 'nameserver 192.168.1.254' > /etc/resolv.conf
 192.168.0.1 est l'addresse ip de la box
 ping 8.8.8.8
 ping google.com
