@@ -202,10 +202,7 @@ Fonctionnalités:
 
 Persistant dans sysctl.conf: **/etc/sysctl.conf** 
 Persistant dans interfaces: **/etc/network/interfaces**
-### Décommentez la ligne suivante dans **/etc/sysctl.conf**:
-Pour activer le "packet forwarding" pour IPv4:
 
-    net.ipv4.ip_forward=1
 Insérez les lignes suivantes dans **/etc/network/interfaces** :
 
     auto lxc-bridge-nat
@@ -215,7 +212,7 @@ Insérez les lignes suivantes dans **/etc/network/interfaces** :
     bridge_maxwait 0
     address 192.168.100.1
     netmask 255.255.255.0
-    up iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
+    
 Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**:
 
     # Network configuration
@@ -227,18 +224,26 @@ Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**:
     lxc.net.0.hwaddr = 00:16:3e:d5:76:c8  
 
 
-
-  
-
-
+### Activer le routage IP
 
     echo 1 > /proc/sys/net/ipv4/ip_forward
 
+### Rendre le routage IP permanent
+
+#### Décommentez la ligne suivante dans **/etc/sysctl.conf**:
+Pour activer le "packet forwarding" pour IPv4:
+
+    net.ipv4.ip_forward=1
 
 
+Pour activer les changements effectués dans sysctl.conf vous aurez besoin pour exécuter la commande:
+    
 
-
-    /etc/init.d/networking restart
+     sysctl -p /etc/sysctl.conf
+    
+Ou vous pouvez aussi le faire en redémarrant le service procps:
+        
+     /etc/init.d/networking restart
 
 Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'interface du bridge avec son adresse ip.
 
@@ -286,12 +291,15 @@ Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'in
        valid_lft forever preferred_lft forever
 
 
-    ifconfig eth0 192.168.100.2/24
-root@c3:~# route add default gw 192.168.100.1
-root@c3:~# echo 'nameserver 192.168.1.254' > /etc/resolv.conf
-192.168.0.1 est l'addresse ip de la box
+    root@c1:~# ifconfig eth0 192.168.100.2/24
+    root@c1:~# route add default gw 192.168.100.1
 
-Pour résoudre le probleme de ping, on lance la commande 
+Changer le nameserver dans le fichier /etc/resolv.conf :
+
+    root@c1:~# echo 'nameserver 192.168.1.254' > /etc/resolv.conf
+   *192.168.0.1 est l'addresse ip de la box*
+
+Pour résoudre le probleme de ping, on lance la commande: 
        
       iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
  Pour la lancer automatiquement au reboot de la machine,
