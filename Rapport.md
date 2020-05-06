@@ -290,5 +290,27 @@ Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'in
 root@c3:~# route add default gw 192.168.100.1
 root@c3:~# echo 'nameserver 192.168.1.254' > /etc/resolv.conf
 192.168.0.1 est l'addresse ip de la box
-ping 8.8.8.8
-ping google.com
+
+Pour résoudre le probleme de ping, on lance la commande 
+       
+      iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+ Pour la lancer automatiquement au reboot de la machine,
+ on la met dans le fichier **/etc/network/if-up.d/iptables**
+ 
+        echo   iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE > /etc/network/if-up.d/iptables
+        
+On ping sur l'adresse Ip de google:
+
+    root@c1:~# ping 8.8.8.8
+    PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+    64 bytes from 8.8.8.8: icmp_seq=1 ttl=51 time=12.3 ms
+    64 bytes from 8.8.8.8: icmp_seq=2 ttl=51 time=12.2 ms
+    64 bytes from 8.8.8.8: icmp_seq=3 ttl=51 time=13.9 ms
+
+On ping sur google.com:
+
+    ping google.com
+    PING google.com (216.58.198.206) 56(84) bytes of data.
+    64 bytes from par10s27-in-f206.1e100.net (216.58.198.206): icmp_seq=1 ttl=51 time=15.3 ms
+    64 bytes from par10s27-in-f206.1e100.net (216.58.198.206): icmp_seq=2 ttl=51 time=12.2 ms
+
