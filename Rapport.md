@@ -322,3 +322,56 @@ On ping sur google.com:
     64 bytes from par10s27-in-f206.1e100.net (216.58.198.206): icmp_seq=1 ttl=51 time=15.3 ms
     64 bytes from par10s27-in-f206.1e100.net (216.58.198.206): icmp_seq=2 ttl=51 time=12.2 ms
 
+
+## Installation d’un serveur DHCP
+
+## Sur la machine qu'on souhaite rendre en serveur DHCP (ici c1)
+### Assigner une adresse IP statique pour ce serveur DHCP avec eth0 dans le fichier **/etc/network/interfaces**:
+
+    # L'interface réseau « loopback » (toujours requise)
+    auto lo
+    iface lo inet loopback
+    auto eth0
+    iface eth0 inet static
+        address 192.168.1.100
+        netmask 255.255.255.0
+        broadcast 192.168.1.255
+        gateway 192.168.1.1
+ ### Modification du fichier  **/etc/resolv.conf** :
+ 
+    # Utilisation du serveur DNS public de Google :
+    nameserver 8.8.8.8
+    nameserver 8.8.4.4
+    # (ou bien utilisez les adresses DNS fournies par votre fournisseur d'accès)
+
+ ### Modification du fichier **/etc/dhcp/dhcpd.conf **:
+    option domain-name "mydebian";
+    # Utilisation du serveur DNS public de Google (ou bien utilisez l'adresse du serveur    DNS fournie par votre fournisseur d'accès):
+    option domain-name-servers 8.8.8.8, 8.8.4.4;
+    # Configuration de votre sous-réseau (subnet) souhaité :
+    subnet 192.168.1.0 netmask 255.255.255.0 {
+    range 192.168.1.101 192.168.1.254;
+    option subnet-mask 255.255.255.0;
+    option broadcast-address 192.168.1.255;
+    option routers 192.168.1.100;
+    option domain-name-servers home;
+    }
+    default-lease-time 600;
+    max-lease-time 7200;
+    # Indique que nous voulons être le seul serveur DHCP de ce réseau :
+    authoritative;
+    
+  
+## Sur les autres  machines (ici c1,c2,c3):
+
+Après avoir lancé le serveur DHCP (comme décrit plus haut, ou en redémarrant), vous devriez être capable d'attribuer vos autres appareils au réseau et ils devraient se voir attribuer automatiquement leur adresse de DHCP. Pour vous assurer d'un ordinateur est configuré pour obtenir son adresse IP en utilisant DHCP, écrivez ceci dans le fichier « /etc/network/interfaces » :
+
+
+    # L'interface réseau « loopback » (toujours requise)
+    auto lo
+    iface lo inet loopback
+
+    # Obtenir l'adresse IP de n'importe quel serveur DHCP
+    auto eth0
+    iface eth0 inet dhcp
+
