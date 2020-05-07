@@ -326,6 +326,11 @@ On ping sur google.com:
 ## Installation d’un serveur DHCP
 
 ## Sur la machine qu'on souhaite rendre en serveur DHCP (ici c1)
+### Installation des paquets isc-dhcp-server:
+
+    apt-get install isc-dhcp-server 
+    
+    
 ### Assigner une adresse IP statique pour ce serveur DHCP avec eth0 dans le fichier **/etc/network/interfaces**:
 
     # L'interface réseau « loopback » (toujours requise)
@@ -360,11 +365,24 @@ On ping sur google.com:
     max-lease-time 7200;
     # Indique que nous voulons être le seul serveur DHCP de ce réseau :
     authoritative;
+
+On précise l'interface dans /etc/default/isc-dhcp-server:
+    
+    INTERFACESv4="eth0" 
+    INTERFACESv6=""
+    
+On redemarre ensuite le service:
+    
+    service isc-dhcp-server restart    
+
+Verification du fonctionnement du service avec la commande:
+
+    service isc-dhcp-server status
     
   
-## Sur les autres  machines (ici c1,c2,c3):
+## Sur les autres machines (les postes clients, ici c2,c3):
 
-Après avoir lancé le serveur DHCP (comme décrit plus haut, ou en redémarrant), vous devriez être capable d'attribuer vos autres appareils au réseau et ils devraient se voir attribuer automatiquement leur adresse de DHCP. Pour vous assurer d'un ordinateur est configuré pour obtenir son adresse IP en utilisant DHCP, écrivez ceci dans le fichier « /etc/network/interfaces » :
+Après avoir lancé le serveur DHCP, il faut attribuer less autres appareils au réseau et ils devraient se voir attribuer automatiquement leur adresse de DHCP. Pour s'assurer d'un ordinateur est configuré pour obtenir son adresse IP en utilisant DHCP, écrire ceci dans le fichier « /etc/network/interfaces » :
 
 
     # L'interface réseau « loopback » (toujours requise)
@@ -374,4 +392,21 @@ Après avoir lancé le serveur DHCP (comme décrit plus haut, ou en redémarrant
     # Obtenir l'adresse IP de n'importe quel serveur DHCP
     auto eth0
     iface eth0 inet dhcp
+    
+## Configuration avancée
+ *Attribuer des adresses fixes*
+ 
+Pour attribuer une adresse fixe, par exemple 192.168.100.64. à un ordinateur particulier, ici c2, il faut ajouter au fichier de configuration **/etc/dhcp/dhcpd.conf** de **C1**
+les lignes suivantes:
+
+    host c2 {
+    hardware ethernet 00:16:3e:3c:63:5f;
+    fixed-address 192.168.100.64;
+    }
+    
+ #### On retrouve l'adresse mac de **C2** dans le fichier **/var/lib/lxc/c2/config** à la ligne suivante:
+ 
+    lxc.net.0.hwaddr = 00:16:3e:3c:63:5f    
+On peut aussi l'obtenir en exécutant la commande ifconfig sur le client quand l'interface est activée.
+    
 
