@@ -413,5 +413,20 @@ les lignes suivantes: ainsi,c2 obtient une adresse IP fixe en 64 et c3 une adres
  
     lxc.net.0.hwaddr = 00:16:3e:3c:63:5f    
 On peut aussi l'obtenir en exécutant la commande ifconfig sur le client quand l'interface est activée.
+
+On verifie ensuite avec la commande **ip a** ou **ifconfig**, qui nous retourne bien:
+
+    inet 192.168.100.64/24 brd 192.168.100.255 scope global dynamic eth0
+ 
+ 
+## Installation du serveur DNS
+
+On installe les packages avec la commande suivante sur le container qui sera le serveur DNS:
+    
+       apt-get install bind9
+       
+
+       
+
     
 
