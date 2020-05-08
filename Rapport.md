@@ -397,14 +397,18 @@ Après avoir lancé le serveur DHCP, il faut attribuer less autres appareils au 
  *Attribuer des adresses fixes*
  
 Pour attribuer une adresse fixe, par exemple 192.168.100.64. à un ordinateur particulier, ici c2, il faut ajouter au fichier de configuration **/etc/dhcp/dhcpd.conf** de **C1**
-les lignes suivantes:
+les lignes suivantes: ainsi,c2 obtient une adresse IP fixe en 64 et c3 une adresse variable.
 
     host c2 {
     hardware ethernet 00:16:3e:3c:63:5f;
     fixed-address 192.168.100.64;
     }
     
- #### On retrouve l'adresse mac de **C2** dans le fichier **/var/lib/lxc/c2/config** à la ligne suivante:
+    host c3 {
+    hardware ethernet 00:16:3e:99:df:3c;
+    }
+    
+ #### On retrouve l'adresse mac de **C2** dans le fichier **/var/lib/lxc/c2/config** à la ligne suivante, on fait de meme pour celle de **C3**:
  
     lxc.net.0.hwaddr = 00:16:3e:3c:63:5f    
 On peut aussi l'obtenir en exécutant la commande ifconfig sur le client quand l'interface est activée.
