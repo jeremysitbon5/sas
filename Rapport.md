@@ -73,7 +73,7 @@ On va donc modifier le fichier: **/etc/lxc/default.conf** et ajouter les lignes 
     systemctl restart lxc-net.service
  
 ## Voici la réponse de la commande *ip a* avant et aprés la configuration:
-    
+### Avant:
     ip a
         1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
         link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -87,6 +87,7 @@ On va donc modifier le fichier: **/etc/lxc/default.conf** et ajouter les lignes 
        valid_lft 84125sec preferred_lft 84125sec
     inet6 fe80::a00:27ff:fe24:f5b7/64 scope link noprefixroute 
        valid_lft forever preferred_lft forever
+### Après:
     root@sas:~# systemctl restart lxc-net.service
     root@sas:~# ip a
     1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
