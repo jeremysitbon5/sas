@@ -183,7 +183,7 @@ Exemple d'utilisation:
     64 bytes from par21s04-in-f174.1e100.net (216.58.213.174): icmp_seq=1 ttl=51 time=11.5 ms
 
 
-## clonage deu container c1:
+## clonage du container c1:
 
 #### Il faut stoper le container c1:
 
@@ -298,7 +298,7 @@ Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'in
 Changer le nameserver dans le fichier /etc/resolv.conf :
 
     root@c1:~# echo 'nameserver 192.168.1.254' > /etc/resolv.conf
-   *192.168.0.1 est l'addresse ip de la box*
+   *192.168.1.254 est l'addresse ip de la box*
 
 Pour résoudre le probleme de ping, on lance la commande: 
        
