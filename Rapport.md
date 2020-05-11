@@ -339,10 +339,10 @@ On ping sur google.com:
     iface lo inet loopback
     auto eth0
     iface eth0 inet static
-        address 192.168.1.100
+        address 192.168.100.10
         netmask 255.255.255.0
         broadcast 192.168.1.255
-        gateway 192.168.1.1
+        gateway 192.168.100.1
  ### Modification du fichier  **/etc/resolv.conf** :
  
     # Utilisation du serveur DNS public de Google :
@@ -355,11 +355,11 @@ On ping sur google.com:
     # Utilisation du serveur DNS public de Google (ou bien utilisez l'adresse du serveur    DNS fournie par votre fournisseur d'accès):
     option domain-name-servers 8.8.8.8, 8.8.4.4;
     # Configuration de votre sous-réseau (subnet) souhaité :
-    subnet 192.168.1.0 netmask 255.255.255.0 {
-    range 192.168.1.101 192.168.1.254;
+    subnet 192.168.100.0 netmask 255.255.255.0 {
+    range 192.168.100.101 192.168.100.254;
     option subnet-mask 255.255.255.0;
-    option broadcast-address 192.168.1.255;
-    option routers 192.168.1.100;
+    option broadcast-address 192.168.100.255;
+    option routers 192.168.100.100;
     option domain-name-servers home;
     }
     default-lease-time 600;
@@ -425,8 +425,137 @@ On installe les packages avec la commande suivante sur le container qui sera le 
     
        apt-get install bind9
        
+### 5.1 Configuration des clients
 
+Modification sur le poste c1:
+
+On chosis de passer par la configuration du serveur DHCP et de  modifier le fichier  **/etc/dhcp/dhcpd.conf**, pour utiliser le domaine asr.fr plutot que de modifier le domaine de chaque machine du réseau (domain et search).
+
+    option domain-name "asr.fr";
+    option domain-name-servers asr.fr; 
        
+ Dans le fichier **/etc/bind/named.conf.local** , on ajoute les lignes suivantes :
+ 
+     zone "asr.fr" {
+     type master;
+     file "/etc/bind/db.asr.fr";
+     };
 
+On créer un zone nomée "asr.fr" pour laquelle notre serveur est "authoritative" ( = master) et son fichier contenant sa base de données est celui cité. Dans ce fichier, on ajoute les lignes suivantes (les mêmes que celles de db.local) :
+
+    ;
+    ; BIND data file for local loopback interface
+    ;
+    $TTL	604800
+    @	IN	SOA	serv. 		serv.localhost. (
+                      2		; Serial
+                 604800		; Refresh
+                  86400		; Retry
+                2419200		; Expire
+                 604800 )	; Negative Cache TTL
+    ;
+    @	IN	NS	serv.
+    serv	IN	A	192.168.100.2
+    c2	IN	A	192.168.100.3
+    c3	IN 	A	192.168.100.4
+    www	IN	CNAME	c3
+    @	IN	AAAA	::1
+
+ la commande ci dessous verifie les erreurs dans le fichier: 
+
+    named-checkzone asr.fr /etc/bind/db.asr.fr 
+ 
+ réponse:
     
+    zone asr.fr/IN: loaded serial 2
+    OK
+
+On redamare le service:
+
+    /etc/init.d/bind9 restart
+    
+Dans les fichiers **/etc/resolv.conf** des postes clients on ajoutes les lignes:
+
+    domain asr.fr
+    search asr.fr
+
+Enfin, dans le fichier **/etc/bind/named.conf.options**, on ajoute les lignes suivantes:
+
+    forwarders {
+	192.168.1.254; #ip du fournisseur d'accès
+	8.8.8.8; # DNS de google
+ };
+
+### 5.5 Résolution inverse de nom
+
+
+
+    zone "100.168.192.in-addr.arpa" {
+	    type master;
+	   file "/etc/bind/db.asr.fr.inv";
+    };
+    
+Et dans le fichier /etc/bind/db.asr.fr.inv, il faut avoir les lignes suivantes :
+
+    ;
+    ; BIND data file for local loopback interface
+    ;
+    $TTL	604800
+    @	IN	SOA	serv. 		serv.localhost. (
+                      4		; Serial
+                 604800		; Refresh
+                  86400		; Retry
+                2419200		; Expire
+                 604800 )	; Negative Cache TTL
+    ;
+    @	IN	NS	serv.asr.fr.
+    4	IN	PTR 	c3.asr.fr.
+    5 	IN	PTR	c2.asr.fr.
+    2	IN 	PTR	serv.asr.fr.
+
+Puis on redémarre le service bind.
+
+    systemctl restart bind9  
+
+
+### 5.6 Résolution DNS secondaire
+
+### Sur c1, le serveur principal:
+
+On autorise le transfert des données vers c2, le serveur secondaire en modifiant le fichier: **/etc/bind/named.conf.options** : 
+        
+        allow-transfer { 192.168.100.4; };
+        
+Dans **/etc/bind/db.asr.fr**, on ajoute la ligne :
+
+     IN      NS      192.168.100.64
+     
+Dans le fichier **/etc/bind/named.conf.local**, on modifie :
+
+    zone "asr.fr" IN {
+        type master;
+        file "/etc/bind/db.asr.fr";
+        notify yes;
+    };
+        
+### Sur c2:
+On ajoutes les lignes ci-dessous dans le fichier **/etc/bind/named.conf.local**:
+
+
+    zone "asr.fr" {
+	type slave;
+	file "/etc/bind/db.asr.fr";
+	masters {192.168.100.10; };
+    allow-notify {192.168.100.10;};
+    };
+
+
+    zone "100.168.192.in-addr.arpa" {
+	type slave;
+	file "/etc/bind/db.asr.fr.inv";
+	masters {192.168.100.10; };
+    };
+       
+*192.168.100.10* est l'adresse Ip de c1.
+*allow-notify {192.168.100.10;}* permet l'autorisation de l'envoi de notification vers le serveur principal (c1).
 
