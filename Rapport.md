@@ -302,11 +302,11 @@ Changer le nameserver dans le fichier /etc/resolv.conf :
 
 Pour résoudre le probleme de ping, on lance la commande: 
        
-      iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+      iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
  Pour la lancer automatiquement au reboot de la machine,
  on la met dans le fichier **/etc/network/if-up.d/iptables**
  
-        echo   iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE > /etc/network/if-up.d/iptables
+        echo   iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE > /etc/network/if-up.d/iptables
         
 On ping sur l'adresse Ip de google:
 
@@ -455,8 +455,8 @@ On créer un zone nomée "asr.fr" pour laquelle notre serveur est "authoritative
                  604800 )	; Negative Cache TTL
     ;
     @	IN	NS	serv.
-    serv	IN	A	192.168.100.2
-    c2	IN	A	192.168.100.3
+    serv	IN	A	192.168.100.10
+    c2	IN	A	192.168.100.64
     c3	IN 	A	192.168.100.4
     www	IN	CNAME	c3
     @	IN	AAAA	::1
@@ -513,7 +513,7 @@ Et dans le fichier /etc/bind/db.asr.fr.inv, il faut avoir les lignes suivantes :
     5 	IN	PTR	c2.asr.fr.
     2	IN 	PTR	serv.asr.fr.
 
-Puis on redémarre le service bind.
+On redémarre le service avec la commande suivante:
 
     systemctl restart bind9  
 
