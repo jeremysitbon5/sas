@@ -447,19 +447,19 @@ On créer un zone nomée "asr.fr" pour laquelle notre serveur est "authoritative
     ; BIND data file for local loopback interface
     ;
     $TTL	604800
-    @	IN	SOA	serv. 		serv.localhost. (
-                      2		; Serial
+    @	IN	SOA	server. server.localhost. (
+                 2020051204		; Serial
                  604800		; Refresh
                   86400		; Retry
                 2419200		; Expire
                  604800 )	; Negative Cache TTL
     ;
-    @	IN	NS	serv.
-    serv	IN	A	192.168.100.10
+    @	IN	NS	server.
+    server	IN	A	192.168.100.10
     c2	IN	A	192.168.100.64
     c3	IN 	A	192.168.100.4
     www	IN	CNAME	c3
-    @	IN	AAAA	::1
+   
 
  la commande ci dessous verifie les erreurs dans le fichier: 
 
@@ -501,17 +501,17 @@ Et dans le fichier /etc/bind/db.asr.fr.inv, il faut avoir les lignes suivantes :
     ; BIND data file for local loopback interface
     ;
     $TTL	604800
-    @	IN	SOA	serv. 		serv.localhost. (
-                      4		; Serial
+    @	IN	SOA	server. 		server.localhost. (
+                      2020051204		; Serial
                  604800		; Refresh
                   86400		; Retry
                 2419200		; Expire
                  604800 )	; Negative Cache TTL
     ;
-    @	IN	NS	serv.asr.fr.
+    @	IN	NS	server.asr.fr.
     4	IN	PTR 	c3.asr.fr.
     5 	IN	PTR	c2.asr.fr.
-    2	IN 	PTR	serv.asr.fr.
+    2	IN 	PTR	server.asr.fr.
 
 On redémarre le service avec la commande suivante:
 
@@ -524,7 +524,7 @@ On redémarre le service avec la commande suivante:
 
 On autorise le transfert des données vers c2, le serveur secondaire en modifiant le fichier: **/etc/bind/named.conf.options** : 
         
-        allow-transfer { 192.168.100.4; };
+        allow-transfer { 192.168.100.64; };
         
 Dans **/etc/bind/db.asr.fr**, on ajoute la ligne :
 
@@ -558,4 +558,23 @@ On ajoutes les lignes ci-dessous dans le fichier **/etc/bind/named.conf.local**:
        
 *192.168.100.10* est l'adresse Ip de c1.
 *allow-notify {192.168.100.10;}* permet l'autorisation de l'envoi de notification vers le serveur principal (c1).
+
+Explications:
+exemple.com.		C'est votre nom de domaine, attention: ne pas oublier le point après le ndd
+	
+	IN		Signifie internet, c’est à dire que la zone après le IN est 				destinée à internet
+
+	SOA		Star Of Authority indiquant le serveur de nom faisant autorité 				c’est à dire votre DNS principal.
+ksxxxx.kimsufi.com.		DNS principal de votre domaine
+email@example.com		adresse email (valide de préférence)
+il faut remplacer le @ par un point et on termine par un point également.
+
+	$TTL	TTL (Time to Live) pour cette zone. Nombre de secondes pendant lesquels 		les informations de la zone peuvent être considérées comme valides et 			être mises en cache
+	2/4	Serial	N° de série à incrémenter à chaque modification de ce fichier. 			Par convention, on écrit: année-mois-jour-numéro_à_2_chiffres. doit 			comporter 10 chiffres
+	Refresh		A l'expiration du délai Refresh exprimé en secondes, le serveur 			esclave va entrer en communication avec le maitre, si il ne le 				trouve pas, il fera une nouvelle tentative au bout du délai 				Retry si au bout du délai Expire il considérera que le serveur 				n'est plus disponible.
+	Retry		Nombre de secondes avant d'effectuer une nouvelle demande au 				serveur maître en cas de non réponse.
+	Expire		Temps (en secondes) d'expiration du serveur principal en cas de 			non réponse.
+	Minimum TTL	Durée de vie minimum du cache en secondes
+	IP		l'ip de votre serveur
+MX		Mail eXchange, qui dit où doit se diriger le courrier envoyé à un nom d'espace particulier contrôlé par cette zone
 
