@@ -422,10 +422,12 @@ On verifie ensuite avec la commande **ip a** ou **ifconfig**, qui nous retourne 
 ## Installation du serveur DNS
 
 On installe les packages avec la commande suivante sur le container qui sera le serveur DNS:
+Bind9 est un serveur DNS, c'est à dire que Bind9 se charge de traduire un nom de domaine en une ip. C'est ce qui permet d'avoir des adresses telles que http://www.exemple.com au lieu de http://111.222.111.222/exemple.com.
+Pour rappel DNS = Domain Name Server (Serveur de nom de domaine)
     
        apt-get install bind9
        
-### 5.1 Configuration des clients
+### 5.1Configuration des clients
 
 Modification sur le poste c1:
 
@@ -433,17 +435,20 @@ On chosis de passer par la configuration du serveur DHCP et de  modifier le fich
 
     option domain-name "asr.fr";
     option domain-name-servers asr.fr; 
-       
+ 
+ Déclaration des zones:
  Dans le fichier **/etc/bind/named.conf.local** , on ajoute les lignes suivantes :
+
+
  
      zone "asr.fr" {
      type master;
      file "/etc/bind/db.asr.fr";
      };
 
-On créer un zone nomée "asr.fr" pour laquelle notre serveur est "authoritative" ( = master) et son fichier contenant sa base de données est celui cité. Dans ce fichier, on ajoute les lignes suivantes (les mêmes que celles de db.local) :
-
-    ;
+Ici le nom de domaine est toujours asr.fr et la configuration de la zone pour asr.fr se fera dans le fichier /etc/bind/db.asr.fr
+   
+   	
     ; BIND data file for local loopback interface
     ;
     $TTL	604800
@@ -461,14 +466,20 @@ On créer un zone nomée "asr.fr" pour laquelle notre serveur est "authoritative
     www	IN	CNAME	c3
    
 
- la commande ci dessous verifie les erreurs dans le fichier: 
+ La commande ci dessous verifie les fichiers de zone:
 
     named-checkzone asr.fr /etc/bind/db.asr.fr 
  
- réponse:
+ Réponse:
     
     zone asr.fr/IN: loaded serial 2
     OK
+
+Vérification des fichiers de configuration:
+	
+	named-checkconf /etc/bind/named.conf.local
+
+Réponse: Si aucun message n'apparait alors c'est reussi!
 
 On redamare le service:
 
@@ -488,14 +499,15 @@ Enfin, dans le fichier **/etc/bind/named.conf.options**, on ajoute les lignes su
 
 ### 5.5 Résolution inverse de nom
 
+Dans le fichier /etc/bind/named.conf.local on ajoute la zone suivante:
 
 
     zone "100.168.192.in-addr.arpa" {
 	    type master;
-	   file "/etc/bind/db.asr.fr.inv";
+	   file "/etc/bind/db.asr.fr.inverse";
     };
     
-Et dans le fichier /etc/bind/db.asr.fr.inv, il faut avoir les lignes suivantes :
+Et dans le fichier /etc/bind/db.asr.fr.inverse :
 
     ;
     ; BIND data file for local loopback interface
@@ -547,12 +559,11 @@ On ajoutes les lignes ci-dessous dans le fichier **/etc/bind/named.conf.local**:
 	file "/etc/bind/db.asr.fr";
 	masters {192.168.100.10; };
     allow-notify {192.168.100.10;};
-    };
 
 
     zone "100.168.192.in-addr.arpa" {
 	type slave;
-	file "/etc/bind/db.asr.fr.inv";
+	file "/etc/bind/db.asr.fr.inverse";
 	masters {192.168.100.10; };
     };
        
@@ -560,21 +571,26 @@ On ajoutes les lignes ci-dessous dans le fichier **/etc/bind/named.conf.local**:
 *allow-notify {192.168.100.10;}* permet l'autorisation de l'envoi de notification vers le serveur principal (c1).
 
 Explications:
-exemple.com.		C'est votre nom de domaine, attention: ne pas oublier le point après le ndd
+
 	
 	IN		Signifie internet, c’est à dire que la zone après le IN est 				destinée à internet
 
-	SOA		Star Of Authority indiquant le serveur de nom faisant autorité 				c’est à dire votre DNS principal.
-ksxxxx.kimsufi.com.		DNS principal de votre domaine
-email@example.com		adresse email (valide de préférence)
-il faut remplacer le @ par un point et on termine par un point également.
+	SOA		Star Of Authority indiquant le serveur de nom faisant autorité 				c’est à dire le DNS principal.
+	
+	Serial		N° de série à incrémenter à chaque modification de ce fichier. 				Par convention, on écrit: année-mois-jour-numéro_à_2_chiffres. 				doit comporter 10 chiffres
 
 	$TTL	TTL (Time to Live) pour cette zone. Nombre de secondes pendant lesquels 		les informations de la zone peuvent être considérées comme valides et 			être mises en cache
-	2/4	Serial	N° de série à incrémenter à chaque modification de ce fichier. 			Par convention, on écrit: année-mois-jour-numéro_à_2_chiffres. doit 			comporter 10 chiffres
+	
 	Refresh		A l'expiration du délai Refresh exprimé en secondes, le serveur 			esclave va entrer en communication avec le maitre, si il ne le 				trouve pas, il fera une nouvelle tentative au bout du délai 				Retry si au bout du délai Expire il considérera que le serveur 				n'est plus disponible.
+	
 	Retry		Nombre de secondes avant d'effectuer une nouvelle demande au 				serveur maître en cas de non réponse.
+	
 	Expire		Temps (en secondes) d'expiration du serveur principal en cas de 			non réponse.
-	Minimum TTL	Durée de vie minimum du cache en secondes
+	
+	Negative cache TTL  définit la durée de vie d'une réponse NXDOMAIN de notre part.
+	
 	IP		l'ip de votre serveur
-MX		Mail eXchange, qui dit où doit se diriger le courrier envoyé à un nom d'espace particulier contrôlé par cette zone
-
+	
+	NS 		renseigne le nom des serveurs de noms pour le domaine.
+	
+	PTR 		 c'est simplement la résolution inverse (le contraire du type A).
