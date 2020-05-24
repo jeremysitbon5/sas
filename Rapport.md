@@ -724,3 +724,46 @@ Nous allons maintenant créer des unités d’organisations (OU), une pour nos u
 On ajoute ces OU à notre base de donnée ldap comme suit:
 
 	ldapadd ‐x ‐D cn=admin,dc=asr.fr,dc=com ‐W ‐f ou.ldif
+	Enter LDAP Password: 
+	adding new entry "ou=Utilisateurs,dc=asr.fr,dc=local"
+	adding new entry "ou=Groupes,dc=asr.fr,dc=local"
+-x : utilise une authentification simple
+-D : spécifie le "Dinstinguished Name" qui va se connecter à notre base LDAP 
+-f : spécifie le nom du fichier contenant les informations à rajouter
+
+#### Création d'utilisateur
+user.ldif pour l’ajout d’utilisateurs.
+
+dn: cn=myuser,ou=Groupes,dc=asr.fr,dc=local
+cn: myuser
+gidNumber: 20000
+objectClass: posixGroup
+
+dn: uid=myuser,ou=Utilisateurs,dc=asr.fr,dc=local
+uid: myuser
+uidNumber: 20000
+gidNumber: 20000
+cn: myuser
+sn: myuser
+
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: organizationalPerson
+loginShell: /bin/bash
+homeDirectory: /home/myuser
+userPassword: myuser
+
+
+Pour ajouter les utilisateur à notre base de donnée LDAP :
+
+	ldapadd ‐x ‐D cn=admin,dc=asr.fr,dc=com ‐W ‐f user.ldif
+	Enter LDAP Password:
+	adding new entry "cn=myuser,ou=Groupes,dc=asr.fr,dc=local"
+	adding new entry "uid=myuser,ou=Utilisateurs,dc=asr.fr,dc=local"
+	
+	
+On peut verifier que l'utilisateur a bien été créé avec la commande suivante:
+
+	ldapsearch -xLLL uid=myuser
+
+	
