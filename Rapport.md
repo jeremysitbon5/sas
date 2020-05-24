@@ -349,9 +349,10 @@ On ping sur google.com:
     nameserver 8.8.8.8
     nameserver 8.8.4.4
     # (ou bien utilisez les adresses DNS fournies par votre fournisseur d'accès)
+    192.168.1.254
 
  ### Modification du fichier **/etc/dhcp/dhcpd.conf **:
-    option domain-name "mydebian";
+    option domain-name "asr.fr";
     # Utilisation du serveur DNS public de Google (ou bien utilisez l'adresse du serveur    DNS fournie par votre fournisseur d'accès):
     option domain-name-servers 8.8.8.8, 8.8.4.4;
     # Configuration de votre sous-réseau (subnet) souhaité :
@@ -428,7 +429,7 @@ On installe les packages avec la commande suivante sur le container qui sera le 
     
        apt-get install bind9
        
-### 5.1Configuration des clients
+### Configuration des clients
 
 Modification sur le poste c1:
 
@@ -498,7 +499,7 @@ Enfin, dans le fichier **/etc/bind/named.conf.options**, on ajoute les lignes su
 	8.8.8.8; # DNS de google
  };
 
-### 5.5 Résolution inverse de nom
+###  Résolution inverse de nom
 
 Dans le fichier /etc/bind/named.conf.local on ajoute la zone suivante:
 
@@ -531,7 +532,7 @@ On redémarre le service avec la commande suivante:
     systemctl restart bind9  
 
 
-### 5.6 Résolution DNS secondaire
+###  Résolution DNS secondaire
 
 ### Sur c1, le serveur principal:
 
@@ -610,51 +611,51 @@ NIS est un protocole client/serveur permettant la centralisation des information
 Il nous sera demandé le nom de notre domaine NIS. C'est un choix arbitraire, il faut juste que ce soit le même pour le serveur et les clients.
 Dans le sujet du TD le nom demandé est asr.
     
- Editez le fichier /etc/sysconfig/network et rajoutez la ligne:
+ Editez le fichier **/etc/sysconfig/network** et rajoutez la ligne:
  NISDOMAIN=<nom du domaine NIS>
 
 		NISDOMAIN=asr.fr
 
-- Éditez le fichier /etc/default/nis
+- Éditez le fichier **/etc/default/nis**
 
 Remplacez "NISSERVER=false" par:
 
 	"NISSERVER=master"
 
-- Éditez le fichier /var/yp/Makefile
+- Éditez le fichier **/var/yp/Makefile**
 
 Remplacez "ALL =   passwd  group hosts rpc services netid protocols netgrp" par "ALL =   passwd shadow  group hosts rpc services netid protocols netgrp"
 
 - Exécutez la commande:
 
-	/usr/lib/yp/ypinit -m
+		/usr/lib/yp/ypinit -m
 
 - Redémarrez NIS:
 
-	/etc/init.d/nis restart
+		/etc/init.d/nis restart
 	
 ####  Installation partie client
-	apres avoir installé nis sur le post client
+##### Apres avoir installé nis sur le post client:
 
-- Editez le fichier /etc/yp.conf
+- Editez le fichier **/etc/yp.conf**
 
 Rajouter la ligne :
-
 domain <nom du domaine> server <nom du serveur NIS>
 
 	domain asr.fr server server.asr.fr
 
 
-- Editez le fichier /etc/nsswitch.conf
+- Editez le fichier **/etc/nsswitch.conf**
 
-Rajoutez "nis" après "compat" devant tout les éléments qui devront être centralisés
+Rajoutez "nis" après "compat" devant tout les éléments qui devront être centralisés:
 
-passwd:         compat  nis
-group:          compat  nis
-shadow:         compat nis
-gshadow:        files
+	passwd:         compat  nis
+	group:          compat  nis
+	shadow:         compat nis
+	gshadow:        files
 
-hosts:          files dns nis
+	hosts:          files dns nis
 
 Il ne reste plus qu'à redémarrer:
-systemctl restart rpcbind nis 
+
+	systemctl restart rpcbind nis 
