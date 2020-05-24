@@ -659,3 +659,68 @@ Rajoutez "nis" après "compat" devant tout les éléments qui devront être cent
 Il ne reste plus qu'à redémarrer:
 
 	systemctl restart rpcbind nis 
+	
+	
+## Lightweight Directory Access Protocol (Ldap)
+
+### Installation et configuration
+
+#### Intallation des paquets Open LDAP :
+	
+	apt‐get install slapd ldap‐utils
+
+#### Configuration de slapd :
+	
+	dpkg‐reconfigure slapd
+Après configuration de notre slapd nous pouvons maintenant modifier notre fichier de configuration qui se trouve dans le répertoire **/etc/ldap/ldap.conf**.
+
+	BASE     dc=asr,dc=local
+	URI      ldap://openldap.mondomaine.local/
+
+#### Configuration des fichiers LDIF et DIT
+
+Créez un nouveau fichier ldif:
+Insérer les lignes suivantes:
+
+	# 1.
+	dn: cn=config
+	changetype: modify
+	replace: olcLogLevel
+	olcLogLevel: stats
+	# 2.1.
+	dn: olcDatabase={1}hdb,cn=config
+	changetype: modify
+	add: olcDbIndex
+	olcDbIndex: uid eq
+	-
+	# 2.2.
+	add: olcDbIndex
+	olcDbIndex: cn eq
+	-
+	# 2.3.
+	add: olcDbIndex
+	olcDbIndex: ou eq
+	-
+	# 2.4.
+	add: olcDbIndex
+	olcDbIndex: dc eq
+
+
+
+On prend les modification en compte avec la commande:
+
+	ldapmodify -QY EXTERNAL -H ldapi:/// -f ~/olc-mod1.ldif
+
+Nous allons maintenant créer des unités d’organisations (OU), une pour nos utilisateurs et une pour les groupes.
+
+	dn: ou=Utilisateurs,dc=asr.fr,dc=local
+	ou: Utilisateurs
+	objectClass: organizationalUnit
+	
+	dn: ou=Groupes,dc=asr.fr,dc=local
+	ou: Groupes
+	objectClass: organizationalUnit
+	
+On ajoute ces OU à notre base de donnée ldap comme suit:
+
+	ldapadd ‐x ‐D cn=admin,dc=asr.fr,dc=com ‐W ‐f ou.ldif
