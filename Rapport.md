@@ -421,9 +421,10 @@ On verifie ensuite avec la commande **ip a** ou **ifconfig**, qui nous retourne 
  
 ## Installation du serveur DNS
 
-On installe les packages avec la commande suivante sur le container qui sera le serveur DNS:
+
 Bind9 est un serveur DNS, c'est à dire que Bind9 se charge de traduire un nom de domaine en une ip. C'est ce qui permet d'avoir des adresses telles que http://www.exemple.com au lieu de http://111.222.111.222/exemple.com.
 Pour rappel DNS = Domain Name Server (Serveur de nom de domaine)
+On installe les packages avec la commande suivante sur le container qui sera le serveur DNS:
     
        apt-get install bind9
        
@@ -594,3 +595,66 @@ Explications:
 	NS 		renseigne le nom des serveurs de noms pour le domaine.
 	
 	PTR 		 c'est simplement la résolution inverse (le contraire du type A).
+
+
+## Serveur d'annuaire NIS
+
+### Installation
+
+#### Installation partie serveur
+On installe le paquet  ypserv avec la commande suivante sur le container qui sera le serveur NIS:
+NIS est un protocole client/serveur permettant la centralisation des informations sur un réseau UNIX.
+ 	
+	apt  install nis
+
+Il nous sera demandé le nom de notre domaine NIS. C'est un choix arbitraire, il faut juste que ce soit le même pour le serveur et les clients.
+Dans le sujet du TD le nom demandé est asr.
+    
+ Editez le fichier /etc/sysconfig/network et rajoutez la ligne:
+ NISDOMAIN=<nom du domaine NIS>
+
+		NISDOMAIN=asr.fr
+
+- Éditez le fichier /etc/default/nis
+
+Remplacez "NISSERVER=false" par:
+
+	"NISSERVER=master"
+
+- Éditez le fichier /var/yp/Makefile
+
+Remplacez "ALL =   passwd  group hosts rpc services netid protocols netgrp" par "ALL =   passwd shadow  group hosts rpc services netid protocols netgrp"
+
+- Exécutez la commande:
+
+	/usr/lib/yp/ypinit -m
+
+- Redémarrez NIS:
+
+	/etc/init.d/nis restart
+	
+####  Installation partie client
+	apres avoir installé nis sur le post client
+
+- Editez le fichier /etc/yp.conf
+
+Rajouter la ligne :
+
+domain <nom du domaine> server <nom du serveur NIS>
+
+	domain asr.fr server server.asr.fr
+
+
+- Editez le fichier /etc/nsswitch.conf
+
+Rajoutez "nis" après "compat" devant tout les éléments qui devront être centralisés
+
+passwd:         compat  nis
+group:          compat  nis
+shadow:         compat nis
+gshadow:        files
+
+hosts:          files dns nis
+
+Il ne reste plus qu'à redémarrer:
+systemctl restart rpcbind nis 
