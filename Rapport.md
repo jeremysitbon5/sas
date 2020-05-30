@@ -609,7 +609,7 @@ NIS est un protocole client/serveur permettant la centralisation des information
 	apt  install nis
 
 Il nous sera demandé le nom de notre domaine NIS. C'est un choix arbitraire, il faut juste que ce soit le même pour le serveur et les clients.
-Dans le sujet du TD le nom demandé est asr.
+Dans le sujet du TD le nom demandé est asr.fr.
     
  Editez le fichier **/etc/sysconfig/network** et rajoutez la ligne:
  NISDOMAIN=<nom du domaine NIS>
