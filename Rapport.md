@@ -636,7 +636,7 @@ Remplacez "ALL =   passwd  group hosts rpc services netid protocols netgrp" par 
 
 		/usr/lib/yp/ypinit -m
 		
-On nous demande d'entrer tous les nom de domaine des serveurs esclaves et de valider la configuration. On ajoute nos clients c3 et c3, il suffit de valider directement (Ctrl+D).
+On nous demande d'entrer tous les nom de domaine des serveurs esclaves et de valider la configuration avec (Ctrl+D).
 
 On peut ajouter un groupe et un utilisateur à ce groupe au serveur NIS:
 
@@ -648,6 +648,7 @@ On verifie que  l'utilisateur a bien été ajouté en faisant un cat **/etc/grou
 	
 	groupe1:x:55:jerem
 	jerem:x:1001:
+
 Étant donné que l'on a modifié les fichiers group et passwd, il faut mettre à jour les tables du serveur NIS.
 
 	cd /var/yp; make
@@ -686,9 +687,17 @@ Il ne reste plus qu'à redémarrer:
 
 	systemctl restart rpcbind nis 
 
-Nous pouvons tester si la configuration a réussi avec la commande **ypwhich** qui retourne bien: **server.asr.fr**.
+Nous pouvons tester si la configuration a réussi avec les commandes:
+- **ypwhich** qui retourne bien le FQDN de notre serveur: **server.asr.fr**.
+-**ypdomainname**qui retourne le nom du domaine NIS:**asr.fr**.
 
+*FQDN = fully qualified domain name ( nom de domaine pleinement qualifié)*
 Pour changer le mot de passe de l'utilisateur, il suffit d'executer la commande **yppasswd**.
+
+On peut se connecter à l’utilisateur que nous avons créé.
+
+	Login :jerem
+	Password :jerem
 	
 	
 ## Lightweight Directory Access Protocol (Ldap)
