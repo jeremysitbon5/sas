@@ -499,11 +499,11 @@ Enfin, dans le fichier **/etc/bind/named.conf.options**, on ajoute les lignes su
     forwarders {
 	192.168.1.254; #ip du fournisseur d'accès
 	8.8.8.8; # DNS de google
- };
+ 	};
 
 ###  Résolution inverse de nom
 
-Dans le fichier /etc/bind/named.conf.local on ajoute la zone suivante:
+Dans le fichier **/etc/bind/named.conf.local** on ajoute la zone suivante:
 
 
     zone "100.168.192.in-addr.arpa" {
@@ -511,7 +511,7 @@ Dans le fichier /etc/bind/named.conf.local on ajoute la zone suivante:
 	   file "/etc/bind/db.asr.fr.inverse";
     };
     
-Et dans le fichier /etc/bind/db.asr.fr.inverse :
+Et dans le fichier **/etc/bind/db.asr.fr.inverse** :
 
     ;
     ; BIND data file for local loopback interface
@@ -638,7 +638,7 @@ Remplacez "ALL =   passwd  group hosts rpc services netid protocols netgrp" par 
 
 		/usr/lib/yp/ypinit -m
 		
-On nous demande d'entrer tous les nom de domaine des serveurs esclaves et de valider la configuration avec (Ctrl+D).
+On nous demande d'entrer tous les nom de domaine des serveurs esclaves et de valider la configuration avec *(Ctrl+D)*.
 
 On peut ajouter un groupe et un utilisateur à ce groupe au serveur NIS:
 
@@ -775,24 +775,24 @@ On ajoute ces OU à notre base de donnée ldap comme suit:
 #### Création d'utilisateur
 user.ldif pour l’ajout d’utilisateurs.
 
-dn: cn=myuser,ou=Groupes,dc=asr.fr,dc=local
-cn: myuser
-gidNumber: 20000
-objectClass: posixGroup
+	dn: cn=myuser,ou=Groupes,dc=asr.fr,dc=local
+	cn: myuser
+	gidNumber: 20000
+	objectClass: posixGroup
 
-dn: uid=myuser,ou=Utilisateurs,dc=asr.fr,dc=local
-uid: myuser
-uidNumber: 20000
-gidNumber: 20000
-cn: myuser
-sn: myuser
+	dn: uid=myuser,ou=Utilisateurs,dc=asr.fr,dc=local
+	uid: myuser
+	uidNumber: 20000
+	gidNumber: 20000
+	cn: myuser
+	sn: myuser
 
-objectClass: posixAccount
-objectClass: shadowAccount
-objectClass: organizationalPerson
-loginShell: /bin/bash
-homeDirectory: /home/myuser
-userPassword: myuser
+	objectClass: posixAccount
+	objectClass: shadowAccount
+	objectClass: organizationalPerson
+	loginShell: /bin/bash
+	homeDirectory: /home/myuser
+	userPassword: myuser
 
 
 Pour ajouter les utilisateur à notre base de donnée LDAP :
