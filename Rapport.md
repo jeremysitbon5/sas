@@ -603,20 +603,26 @@ Explications:
 ### Installation
 
 #### Installation partie serveur
-On installe le paquet  ypserv avec la commande suivante sur le container qui sera le serveur NIS:
+On installe le paquet  ypserv avec la commande suivante sur le container qui sera le serveur NIS:  
 NIS est un protocole client/serveur permettant la centralisation des informations sur un réseau UNIX.
  	
 	apt  install nis
 
 Il nous sera demandé le nom de notre domaine NIS. C'est un choix arbitraire, il faut juste que ce soit le même pour le serveur et les clients.
 Dans le sujet du TD le nom demandé est asr.fr.
-    
+Le nom du serveur NIS doit être pleinnement qualifié et suivi du nom d'hôte de la machine:
+
+Dans **/etc/hosts**:
+
+	192.168.100.10 server.asr.fr c1
+
+
  Editez le fichier **/etc/sysconfig/network** et rajoutez la ligne:
  NISDOMAIN=<nom du domaine NIS>
 
 		NISDOMAIN=asr.fr
 
-- Éditez le fichier **/etc/default/nis**
+- Éditez le fichier **/etc/default/nis** pour définir notre machine comme serveur maître.
 
 Remplacez "NISSERVER=false" par:
 
@@ -629,13 +635,29 @@ Remplacez "ALL =   passwd  group hosts rpc services netid protocols netgrp" par 
 - Exécutez la commande:
 
 		/usr/lib/yp/ypinit -m
+		
+On nous demande d'entrer tous les nom de domaine des serveurs esclaves et de valider la configuration. On ajoute nos clients c3 et c3, il suffit de valider directement (Ctrl+D).
+
+On peut ajouter un groupe et un utilisateur à ce groupe au serveur NIS:
+
+	groupadd -g 55 groupe1
+	useradd -G groupe1 jerem
+	passwd jerem
+
+On verifie que  l'utilisateur a bien été ajouté en faisant un cat **/etc/group**:
+	
+	groupe1:x:55:jerem
+	jerem:x:1001:
+Étant donné que l'on a modifié les fichiers group et passwd, il faut mettre à jour les tables du serveur NIS.
+
+	cd /var/yp; make
 
 - Redémarrez NIS:
 
 		/etc/init.d/nis restart
 	
 ####  Installation partie client
-##### Apres avoir installé nis sur le post client:
+##### Apres avoir installé nis sur le post client (apt-get install nis):
 
 - Editez le fichier **/etc/yp.conf**
 
@@ -647,7 +669,7 @@ domain <nom du domaine> server <nom du serveur NIS>
 
 - Editez le fichier **/etc/nsswitch.conf**
 
-Rajoutez "nis" après "compat" devant tout les éléments qui devront être centralisés:
+Rajoutez "nis" après "compat" devant tout les éléments qui devront être centralisés  (quels fichiers synchroniser avec le serveur):
 
 	passwd:         compat  nis
 	group:          compat  nis
@@ -656,9 +678,17 @@ Rajoutez "nis" après "compat" devant tout les éléments qui devront être cent
 
 	hosts:          files dns nis
 
+On redéfini le serveur NIS dans le fichier **/etc/hosts**:
+
+	192.168.100.10 server.asr.fr c1
+
 Il ne reste plus qu'à redémarrer:
 
 	systemctl restart rpcbind nis 
+
+Nous pouvons tester si la configuration a réussi avec la commande **ypwhich** qui retourne bien: **server.asr.fr**.
+
+Pour changer le mot de passe de l'utilisateur, il suffit d'executer la commande **yppasswd**.
 	
 	
 ## Lightweight Directory Access Protocol (Ldap)
