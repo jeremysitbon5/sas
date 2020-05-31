@@ -342,7 +342,7 @@ On ping sur google.com:
     iface eth0 inet static
         address 192.168.100.10
         netmask 255.255.255.0
-        broadcast 192.168.1.255
+        broadcast 192.168.1OO.255
         gateway 192.168.100.1
  ### Modification du fichier  **/etc/resolv.conf** :
  
