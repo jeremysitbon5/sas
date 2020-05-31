@@ -28,7 +28,7 @@ Ou par la commande:
     user add (**-m** pour la création automatique de la home).
 
 ## Configuration de ssh:
-### installation des package ssh:
+### Installation des package ssh:
 
     apt install ssh
 
@@ -72,8 +72,8 @@ On va donc modifier le fichier: **/etc/lxc/default.conf** et ajouter les lignes 
 ### Redemarrer lxc-net:
     systemctl restart lxc-net.service
  
-## Voici la réponse de la commande *ip a* avant et aprés la configuration:
-### Avant:
+### Voici la réponse de la commande *ip a* avant et aprés la configuration:
+#### Avant:
     ip a
         1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
         link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -87,7 +87,7 @@ On va donc modifier le fichier: **/etc/lxc/default.conf** et ajouter les lignes 
        valid_lft 84125sec preferred_lft 84125sec
     inet6 fe80::a00:27ff:fe24:f5b7/64 scope link noprefixroute 
        valid_lft forever preferred_lft forever
-### Après:
+#### Après:
     root@sas:~# systemctl restart lxc-net.service
     root@sas:~# ip a
     1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
@@ -116,7 +116,7 @@ On va donc modifier le fichier: **/etc/lxc/default.conf** et ajouter les lignes 
 ### Verifier l'état du container avec la commande:
     lxc-info c1
 
-Exemple d'utilisation:
+### Exemple d'utilisation:
 
     root@sas:~# lxc-stop c1
     root@sas:~# lxc-info c1
@@ -176,7 +176,7 @@ Exemple d'utilisation:
         ping 8.8.8.8 **(adresse de google)**
         64 bytes from 8.8.8.8: icmp_seq=1 ttl=51 time=16.1 ms
         
-  Ainsi que la commande:
+  #### Ainsi que la commande:
 
     root@c1:~# ping google.com
     PING google.com (216.58.213.174) 56(84) bytes of data.
@@ -185,26 +185,26 @@ Exemple d'utilisation:
 
 ## clonage du container c1:
 
-#### Il faut stoper le container c1:
+### Il faut stoper le container c1:
 
     lxc-stop c1
 
-#### Puis on clone c1 en c2 et c3:
+### Puis on clone c1 en c2 et c3:
     lxc-copy -n c1 -N c2
     lxc-copy -n c1 -N c3
 
-#### Enfin on verifie la présence des 3 containers avec la commande:
+### Enfin on verifie la présence des 3 containers avec la commande:
     lxc-ls
-**On verifie bien la pésence de C1,C2 et C3.**
+*On verifie bien la pésence de C1,C2 et C3.*
 
 
 ## Creation du bridge:
-Fonctionnalités:
+### Fonctionnalités:
 
-Persistant dans sysctl.conf: **/etc/sysctl.conf** 
-Persistant dans interfaces: **/etc/network/interfaces**
+- Persistant dans sysctl.conf: **/etc/sysctl.conf** 
+- Persistant dans interfaces: **/etc/network/interfaces**
 
-Insérez les lignes suivantes dans **/etc/network/interfaces** :
+#### Insérez les lignes suivantes dans **/etc/network/interfaces** :
 
     auto lxc-bridge-nat
     iface lxc-bridge-nat inet static
@@ -214,7 +214,7 @@ Insérez les lignes suivantes dans **/etc/network/interfaces** :
     address 192.168.100.1
     netmask 255.255.255.0
     
-Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**:
+ Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**:
 
     # Network configuration
     lxc.net.0.type = veth
@@ -231,18 +231,18 @@ Puis adaptez la configuration réseau dans **/var/lib/lxc/monContainer/config**:
 
 ### Rendre le routage IP permanent
 
-#### Décommentez la ligne suivante dans **/etc/sysctl.conf**:
+Décommentez la ligne suivante dans **/etc/sysctl.conf**:
 Pour activer le "packet forwarding" pour IPv4:
 
     net.ipv4.ip_forward=1
 
 
-Pour activer les changements effectués dans sysctl.conf vous aurez besoin pour exécuter la commande:
+Pour activer les changements effectués dans **sysctl.conf** vous aurez besoin pour exécuter la commande:
     
 
      sysctl -p /etc/sysctl.conf
     
-Ou vous pouvez aussi le faire en redémarrant le service procps:
+Ou vous pouvez aussi le faire en redémarrant le service:
         
      /etc/init.d/networking restart
 
@@ -295,7 +295,7 @@ Vérifier avec **if config** ou **ip a** d’avoir: la ligne 4: nous montre l'in
     root@c1:~# ifconfig eth0 192.168.100.2/24
     root@c1:~# route add default gw 192.168.100.1
 
-Changer le nameserver dans le fichier /etc/resolv.conf :
+Changer le nameserver dans le fichier **/etc/resolv.conf** :
 
     root@c1:~# echo 'nameserver 192.168.1.254' > /etc/resolv.conf
    *192.168.1.254 est l'addresse ip de la box*
@@ -303,7 +303,8 @@ Changer le nameserver dans le fichier /etc/resolv.conf :
 Pour résoudre le probleme de ping, on lance la commande: 
        
       iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
- Pour la lancer automatiquement au reboot de la machine,
+
+Pour la lancer automatiquement au reboot de la machine,
  on la met dans le fichier **/etc/network/if-up.d/iptables**
  
         echo   iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE > /etc/network/if-up.d/iptables
@@ -326,7 +327,7 @@ On ping sur google.com:
 
 ## Installation d’un serveur DHCP
 
-## Sur la machine qu'on souhaite rendre en serveur DHCP (ici c1)
+### Sur la machine qu'on souhaite rendre en serveur DHCP (ici c1)
 ### Installation des paquets isc-dhcp-server:
 
     apt-get install isc-dhcp-server 
@@ -368,7 +369,7 @@ On ping sur google.com:
     # Indique que nous voulons être le seul serveur DHCP de ce réseau :
     authoritative;
 
-On précise l'interface dans /etc/default/isc-dhcp-server:
+On précise l'interface dans **/etc/default/isc-dhcp-server**:
     
     INTERFACESv4="eth0" 
     INTERFACESv6=""
@@ -384,7 +385,7 @@ Verification du fonctionnement du service avec la commande:
   
 ## Sur les autres machines (les postes clients, ici c2,c3):
 
-Après avoir lancé le serveur DHCP, il faut attribuer less autres appareils au réseau et ils devraient se voir attribuer automatiquement leur adresse de DHCP. Pour s'assurer d'un ordinateur est configuré pour obtenir son adresse IP en utilisant DHCP, écrire ceci dans le fichier « /etc/network/interfaces » :
+Après avoir lancé le serveur DHCP, il faut attribuer les autres appareils au réseau et ils devraient se voir attribuer automatiquement leur adresse de DHCP. Pour s'assurer d'un ordinateur est configuré pour obtenir son adresse IP en utilisant DHCP, écrire ceci dans le fichier « **/etc/network/interfaces** » :
 
 
     # L'interface réseau « loopback » (toujours requise)
@@ -413,7 +414,8 @@ les lignes suivantes: ainsi,c2 obtient une adresse IP fixe en 64 et c3 une adres
  #### On retrouve l'adresse mac de **C2** dans le fichier **/var/lib/lxc/c2/config** à la ligne suivante, on fait de meme pour celle de **C3**:
  
     lxc.net.0.hwaddr = 00:16:3e:3c:63:5f    
-On peut aussi l'obtenir en exécutant la commande ifconfig sur le client quand l'interface est activée.
+
+On peut aussi l'obtenir en exécutant la commande **ifconfig** sur le client quand l'interface est activée.
 
 On verifie ensuite avec la commande **ip a** ou **ifconfig**, qui nous retourne bien:
 
@@ -431,14 +433,14 @@ On installe les packages avec la commande suivante sur le container qui sera le 
        
 ### Configuration des clients
 
-Modification sur le poste c1:
+#### Modification sur le poste c1:
 
 On chosis de passer par la configuration du serveur DHCP et de  modifier le fichier  **/etc/dhcp/dhcpd.conf**, pour utiliser le domaine asr.fr plutot que de modifier le domaine de chaque machine du réseau (domain et search).
 
     option domain-name "asr.fr";
     option domain-name-servers asr.fr; 
  
- Déclaration des zones:
+ ##### Déclaration des zones:
  Dans le fichier **/etc/bind/named.conf.local** , on ajoute les lignes suivantes :
 
 
@@ -448,7 +450,7 @@ On chosis de passer par la configuration du serveur DHCP et de  modifier le fich
      file "/etc/bind/db.asr.fr";
      };
 
-Ici le nom de domaine est toujours asr.fr et la configuration de la zone pour asr.fr se fera dans le fichier /etc/bind/db.asr.fr
+##### Ici le nom de domaine est toujours asr.fr et la configuration de la zone pour asr.fr se fera dans le fichier /etc/bind/db.asr.fr
    
    	
     ; BIND data file for local loopback interface
